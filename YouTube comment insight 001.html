@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YouTube Comment Insight</title>
+<style>
+:root{--bg:#0d0f12;--panel:#171a1f;--panel2:#1e2229;--line:#343a44;--text:#f5f7fa;--muted:#aab2bf;--accent:#00e58b;--blue:#29b6f6;--red:#ff4d67;--yellow:#ffca28;--purple:#ab7cff}
+*{box-sizing:border-box} body{font-family:Arial,"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text);margin:0;line-height:1.55}
+main{max-width:1400px;margin:auto;padding:24px} h1{text-align:center;margin:6px 0 4px} .subtitle{text-align:center;color:var(--muted);margin:0 0 24px}
+#dropZone{border:3px dashed #626a76;border-radius:16px;padding:42px 20px;text-align:center;background:#14171b;cursor:pointer;transition:.2s}
+#dropZone.hover{border-color:var(--accent);background:#10231c;transform:translateY(-2px)} #dropZone strong{font-size:20px;display:block} #dropZone small{color:var(--muted)}
+#fileInput{display:none}.toolbar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px 0 22px}.btn{border:1px solid var(--line);color:#fff;background:var(--panel2);padding:10px 16px;border-radius:9px;cursor:pointer;font-weight:bold}.btn.primary{background:#fff;color:#111;border-color:#fff}.btn:disabled{opacity:.4;cursor:not-allowed}
+#status{min-height:24px;text-align:center;color:var(--muted);margin-bottom:10px}.error{color:#ff8a9a!important}.success{color:var(--accent)!important}
+.section{margin-top:26px}.section-title{font-size:21px;margin:0 0 12px}.panel{background:var(--panel);border:1px solid #262b33;border-radius:12px;padding:16px;overflow:auto}.hidden{display:none!important}
+.file-grid,.rank-grid,.keyword-grid,.top-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.file-card{background:var(--panel);border:1px solid #2b3039;border-top:4px solid var(--c);border-radius:12px;padding:16px;min-width:0}.file-name{font-size:16px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.metric{font-size:30px;font-weight:bold;color:var(--c);margin-top:5px}.muted{color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;min-width:760px}th,td{border:1px solid var(--line);padding:10px;text-align:center}th{background:#222730;position:sticky;top:0}td:first-child,th:first-child{text-align:left;font-weight:bold}.best{background:#123526;color:#b4ffd9}.warn{color:#ff8a9a}
+.bar-row{display:grid;grid-template-columns:120px 1fr 58px;gap:10px;align-items:center;margin:9px 0}.bar-track{height:18px;background:#292e36;border-radius:10px;overflow:hidden}.bar-fill{height:100%;border-radius:10px;min-width:0;transition:width .4s}.legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.rank-card{background:linear-gradient(145deg,#1c2027,#13161a);border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center}.medal{font-size:34px}.score{font-size:29px;color:var(--accent);font-weight:bold}.formula{color:var(--muted);font-size:12px;margin-top:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{background:#262c34;border:1px solid #39414d;border-radius:999px;padding:6px 10px;font-size:13px}.chip b{color:var(--accent)}
+.comment{background:#12151a;border-left:3px solid var(--c);border-radius:7px;padding:10px;margin:10px 0}.comment-head{font-size:12px;color:var(--muted);margin-bottom:4px}.summary-box{white-space:pre-line}.notice{background:#28220f;border:1px solid #6c5a1d;color:#ffe58a;border-radius:9px;padding:10px;margin-top:12px}
+#singleComments{grid-template-columns:1fr}
+.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.detail-card{background:var(--panel);border:1px solid #2b3039;border-top:4px solid var(--c);border-radius:12px;padding:16px;min-width:0}.count-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}.count-box{background:#101318;border:1px solid var(--line);border-radius:9px;padding:10px;text-align:center}.count-value{display:block;color:var(--c);font-size:25px;font-weight:bold}.count-label{display:block;color:var(--muted);font-size:12px}.sentiment-counts{display:flex;overflow:hidden;border-radius:9px;min-height:58px;margin:14px 0}.sentiment-count{display:flex;align-items:center;justify-content:center;padding:8px;color:#fff;font-size:12px;font-weight:bold;min-width:0}.sentiment-count.positive{background:#00a965}.sentiment-count.negative{background:#d93c55}.category-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-items:end;height:145px;margin-top:12px}.category-item{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}.category-bar{width:100%;min-height:8px;border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-size:11px;font-weight:bold;padding-top:2px}.category-label{color:var(--muted);font-size:11px;white-space:nowrap}
+
+.upload-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}
+.upload-box{background:var(--panel);border:1px solid #2b3039;border-top:4px solid var(--c);border-radius:13px;padding:18px;min-width:0}
+.upload-box h3{margin:0 0 12px;color:var(--c);font-size:20px}
+.video-title{width:100%;padding:11px 12px;margin-bottom:12px;border:1px solid var(--line);border-radius:8px;background:#101318;color:#fff;font-size:15px;outline:none}
+.video-title:focus{border-color:var(--c)}
+.csv-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.file-label{display:block;text-align:center;padding:11px 12px;border:1px solid var(--c);border-radius:8px;color:var(--c);cursor:pointer;font-weight:bold;background:#11161a;transition:.2s}
+.file-label:hover{background:var(--c);color:#07110c}
+.selected-file{margin-top:10px;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selected-file.ready{color:var(--accent)}
+.api-panel{background:var(--panel);border:1px solid #2b3039;border-radius:13px;padding:16px;margin:16px 0}.api-panel label{display:block;font-weight:bold;margin-bottom:7px}.api-key,.youtube-url{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:#101318;color:#fff;font-size:14px;outline:none}.api-key:focus,.youtube-url:focus{border-color:var(--accent)}.source-or{text-align:center;color:var(--muted);font-size:12px;margin:10px 0}.slot-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.slot-btn{flex:1;min-width:92px;border:1px solid var(--c);color:var(--c);background:#11161a;padding:9px;border-radius:8px;cursor:pointer;font-weight:bold}.slot-btn:hover{background:var(--c);color:#07110c}.slot-btn:disabled{opacity:.4;cursor:not-allowed}.fetch-status{min-height:21px;margin-top:8px;color:var(--muted);font-size:12px}.fetch-status.ready{color:var(--accent)}.fetch-status.error{color:#ff8a9a}.preview{max-height:260px;overflow:auto;margin-top:10px;background:#101318;border:1px solid var(--line);border-radius:8px;padding:8px}.preview .comment{font-size:12px;margin:6px 0}.preview .comment-head{display:flex;justify-content:space-between;gap:8px}.security-note{color:var(--muted);font-size:12px;margin-top:7px}
+@media(max-width:850px){main{padding:14px}.file-grid,.rank-grid,.keyword-grid,.top-grid,.upload-panel,.detail-grid{grid-template-columns:1fr}.bar-row{grid-template-columns:88px 1fr 45px}}
+@media print{body{background:#fff;color:#111}.toolbar,#dropZone,#status,.api-panel,.upload-panel{display:none}.panel,.file-card,.rank-card,.detail-card,.count-box{background:#fff;border-color:#bbb}.muted,.formula,.count-label,.category-label{color:#555}main{max-width:none}.section,.detail-card{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>YouTube Comment Insight 001</h1>
+<p class="subtitle">2～6つのYouTube URLを自動比較分析</p>
+<div class="api-panel">
+  <label for="apiKey">YouTube Data API Key（全動画共通）</label>
+  <input class="api-key" id="apiKey" type="password" autocomplete="off" placeholder="APIキーを入力">
+  <div class="security-note">APIキーはブラウザー内でのみ使用し、このHTMLには保存しません。APIキーにはYouTube Data API v3の制限設定を推奨します。</div>
+</div>
+<div class="upload-panel">
+  <div class="upload-box" style="--c:#00e58b">
+    <h3>動画A</h3>
+
+    <input class="youtube-url" id="url1" type="url" placeholder="https://www.youtube.com/watch?v=...">
+    <div class="slot-actions">
+      <button class="slot-btn" type="button" id="fetch1">コメント取得</button>
+      <button class="slot-btn" type="button" id="copy1" disabled>コピー</button>
+      <button class="slot-btn" type="button" id="save1" disabled>CSV保存</button>
+      <button class="slot-btn" type="button" id="analyzeA" disabled>動画Aを単独評価</button>
+      <button class="slot-btn" type="button" id="pdfA" disabled>単独評価PDF</button>
+      <button class="slot-btn" type="button" id="resetA">動画Aをリセット</button>
+    </div>
+    <div class="fetch-status" id="fetchStatus1">YouTube URLを入力してください。</div>
+    <div class="preview hidden" id="preview1"></div>
+  </div>
+  <div class="upload-box" style="--c:#29b6f6">
+    <h3>動画B</h3>
+<input class="youtube-url" id="url2" type="url" placeholder="https://www.youtube.com/watch?v=...">
+    <div class="slot-actions">
+      <button class="slot-btn" type="button" id="fetch2">コメント取得</button>
+      <button class="slot-btn" type="button" id="copy2" disabled>コピー</button>
+      <button class="slot-btn" type="button" id="save2" disabled>CSV保存</button>
+      <button class="slot-btn" type="button" id="analyzeB" disabled>動画Bを単独評価</button>
+      <button class="slot-btn" type="button" id="pdfB" disabled>単独評価PDF</button>
+      <button class="slot-btn" type="button" id="resetB">動画Bをリセット</button>
+    </div>
+    <div class="fetch-status" id="fetchStatus2">YouTube URLを入力してください。</div>
+    <div class="preview hidden" id="preview2"></div>
+  </div>
+  <div class="upload-box hidden" id="slot3" style="--c:#ab7cff">
+    <h3>動画C</h3>
+<input class="youtube-url" id="url3" type="url" placeholder="https://www.youtube.com/watch?v=...">
+    <div class="slot-actions">
+      <button class="slot-btn" type="button" id="fetch3">コメント取得</button>
+      <button class="slot-btn" type="button" id="copy3" disabled>コピー</button>
+      <button class="slot-btn" type="button" id="save3" disabled>CSV保存</button>
+      <button class="slot-btn" type="button" id="analyzeC" disabled>動画Cを単独評価</button>
+      <button class="slot-btn" type="button" id="pdfC" disabled>単独評価PDF</button>
+      <button class="slot-btn" type="button" id="resetC">動画Cをリセット</button>
+    </div>
+    <div class="fetch-status" id="fetchStatus3">YouTube URLを入力してください。</div>
+    <div class="preview hidden" id="preview3"></div>
+  </div>
+  <div class="upload-box hidden" id="slot4" style="--c:#ffca28">
+    <h3>動画D</h3>
+    <input class="youtube-url" id="url4" type="url" placeholder="https://www.youtube.com/watch?v=...">
+    <div class="slot-actions">
+      <button class="slot-btn" type="button" id="fetch4">コメント取得</button>
+      <button class="slot-btn" type="button" id="copy4" disabled>コピー</button>
+      <button class="slot-btn" type="button" id="save4" disabled>CSV保存</button>
+      <button class="slot-btn" type="button" id="analyzeD" disabled>動画Dを単独評価</button>
+      <button class="slot-btn" type="button" id="pdfD" disabled>単独評価PDF</button>
+      <button class="slot-btn" type="button" id="resetD">動画Dをリセット</button>
+    </div>
+    <div class="fetch-status" id="fetchStatus4">YouTube URLを入力してください。</div>
+    <div class="preview hidden" id="preview4"></div>
+  </div>
+  <div class="upload-box hidden" id="slot5" style="--c:#ff8a65">
+    <h3>動画E</h3>
+    <input class="youtube-url" id="url5" type="url" placeholder="https://www.youtube.com/watch?v=...">
+    <div class="slot-actions">
+      <button class="slot-btn" type="button" id="fetch5">コメント取得</button>
+      <button class="slot-btn" type="button" id="copy5" disabled>コピー</button>
+      <button class="slot-btn" type="button" id="save5" disabled>CSV保存</button>
+      <button class="slot-btn" type="button" id="analyzeE" disabled>動画Eを単独評価</button>
+      <button class="slot-btn" type="button" id="pdfE" disabled>単独評価PDF</button>
+      <button class="slot-btn" type="button" id="resetE">動画Eをリセット</button>
+    </div>
+    <div class="fetch-status" id="fetchStatus5">YouTube URLを入力してください。</div>
+    <div class="preview hidden" id="preview5"></div>
+  </div>
+  <div class="upload-box hidden" id="slot6" style="--c:#ec407a">
+    <h3>動画F</h3>
+    <input class="youtube-url" id="url6" type="url" placeholder="https://www.youtube.com/watch?v=...">
+    <div class="slot-actions">
+      <button class="slot-btn" type="button" id="fetch6">コメント取得</button>
+      <button class="slot-btn" type="button" id="copy6" disabled>コピー</button>
+      <button class="slot-btn" type="button" id="save6" disabled>CSV保存</button>
+      <button class="slot-btn" type="button" id="analyzeF" disabled>動画Fを単独評価</button>
+      <button class="slot-btn" type="button" id="pdfF" disabled>単独評価PDF</button>
+      <button class="slot-btn" type="button" id="resetF">動画Fをリセット</button>
+    </div>
+    <div class="fetch-status" id="fetchStatus6">YouTube URLを入力してください。</div>
+    <div class="preview hidden" id="preview6"></div>
+  </div>
+</div>
+<div class="toolbar">
+  <button class="btn" id="addVideoBtn">動画Cを追加</button>
+  <button class="btn primary" id="analyzeBtn" disabled>2動画を比較分析</button>
+  <button class="btn" id="resetBtn">全体リセット</button>
+  <button class="btn" id="printBtn" disabled>印刷・PDF保存</button>
+</div>
+<div id="status">動画A・動画BのURLを入力し、各欄の「コメント取得」を押してください。</div>
+<div id="singleResults" class="hidden">
+  <section class="section"><h2 class="section-title" id="singleTitle">🎯 単独評価</h2><div id="singleOverview" class="file-grid"></div></section>
+  <section class="section"><h2 class="section-title">📊 詳細分析（件数）</h2><div id="singleDetail" class="detail-grid"></div></section>
+  <section class="section"><h2 class="section-title">📈 評価指標</h2><div class="panel"><div id="singleMetrics"></div></div></section>
+  <section class="section"><h2 class="section-title">🔥 頻出キーワード TOP20</h2><div class="panel"><div id="singleKeywords" class="chips"></div></div></section>
+  <section class="section"><h2 class="section-title">👍 いいね上位コメント TOP10</h2><div id="singleComments" class="top-grid"></div></section>
+  <section class="section"><h2 class="section-title" id="singleSummaryTitle">📝 単独総評</h2><div class="panel summary-box" id="singleSummary"></div></section>
+</div>
+<div id="results" class="hidden">
+  <section class="section"><h2 class="section-title">📺 動画情報</h2><div id="fileCards" class="file-grid"></div></section>
+  <section class="section"><h2 class="section-title">📊 動画別詳細分析（件数）</h2><div id="detailAnalysis" class="detail-grid"></div></section>
+  <section class="section"><h2 class="section-title" id="comparisonTitle">📋 動画比較</h2><div class="panel"><div id="comparison"></div></div></section>
+  <section class="section"><h2 class="section-title">📈 指標比較</h2><div class="panel"><div id="metricCharts"></div></div></section>
+  <section class="section"><h2 class="section-title">🏆 総合ランキング</h2><div id="ranking" class="rank-grid"></div><div class="notice">総合スコアは辞書一致による参考値です。ポジティブ率×25＋購入意向率×35＋期待率×20＋要望率×5－ネガティブ率×25－不満率×30で算出します。</div></section>
+  <section class="section"><h2 class="section-title" id="commonTitle">🔍 共通キーワード TOP30</h2><div class="panel"><div id="commonKeywords" class="chips"></div></div></section>
+  <section class="section"><h2 class="section-title">⭐ 動画ごとの特徴語 TOP15</h2><div id="uniqueKeywords" class="keyword-grid"></div></section>
+  <section class="section"><h2 class="section-title">🔥 動画別 頻出キーワード TOP20</h2><div id="fileKeywords" class="keyword-grid"></div></section>
+  <section class="section"><h2 class="section-title">👍 いいね上位コメント</h2><div id="topComments" class="top-grid"></div></section>
+  <section class="section"><h2 class="section-title">📝 自動総評</h2><div class="panel summary-box" id="summary"></div></section>
+</div>
+</main>
+<script>
+'use strict';
+const COLORS=['#00e58b','#29b6f6','#ab7cff','#ffca28','#ff8a65','#ec407a'];
+const WORDS={positive:["can't wait",'cant wait','excited','love','amazing','great','awesome','favorite','best','good','perfect','perfection','beautiful','cool','nice','excellent','楽しみ','期待','最高','素晴らしい','かっこいい','好き','良い','欲しい'],negative:['lousy','nothing','bad','mess','worst','boring','propaganda','sketchy','waste','fraud','disappoint','ugly','expensive','嫌い','最悪','つまらない','残念','高すぎ','微妙','ダサい','不満'],purchase:['buy','purchase','own','order','dealer','予約','購入','買う','買いたい','欲しい','注文','販売店'],request:['africa twin','sportbike','tourer','transalp','vfr','full fairing','please','want','need','希望','要望','してほしい','欲しい','出して','追加して'],expectation:["can't wait",'cant wait','excited','hope','looking forward','楽しみ','期待','待ちきれない','待っている'],complaint:['nothing','show the bike','what was the purpose','worst','disappoint','boring','不満','残念','つまらない','意味がない','見せて','高すぎ']};
+const STOP=new Set(['honda','bike','bikes','engine','motorcycle','motorcycles','this','that','with','from','have','just','they','will','would','there','their','about','what','when','your','youre','really','more','than','very','like','video','https','www','そして','これ','それ','この','その','ため','です','ます','する','ある','いる','こと','もの','よう','動画']);
+const $=id=>document.getElementById(id), LABELS='ABCDEF', urlInputs=Array.from({length:6},(_,i)=>$(`url${i+1}`));
+const fetched=[null,null,null,null,null,null];
+let activeCount=2;
+let currentSingleIndex=null;
+const activeIndices=()=>Array.from({length:activeCount},(_,i)=>i);
+function sourceReady(i){return Array.isArray(fetched[i])&&fetched[i].length>0}
+function updateAnalyzeState(){const active=activeIndices(),ok=active.every(sourceReady),ready=active.filter(sourceReady);$('analyzeBtn').disabled=!ok;$('analyzeBtn').textContent=`${activeCount}動画を比較分析`;active.forEach(i=>{const disabled=!sourceReady(i);$(`analyze${LABELS[i]}`).disabled=disabled;$(`pdf${LABELS[i]}`).disabled=disabled});setStatus(ok?`${activeCount}つの動画コメントを取得しました。「比較分析」または各動画の「単独評価」を押してください。`:ready.length?`動画${ready.map(i=>LABELS[i]).join('・動画')}を単独評価できます。比較には表示中の残りの動画も取得してください。`:'動画A・動画BのURLを入力し、各欄の「コメント取得」を押してください。')}
+Array.from({length:6},(_,i)=>i).forEach(i=>{$(`fetch${i+1}`).onclick=()=>getComments(i);$(`copy${i+1}`).onclick=()=>copyComments(i);$(`save${i+1}`).onclick=()=>downloadCSV(i);$(`analyze${LABELS[i]}`).onclick=()=>analyzeSingleVideo(i);$(`pdf${LABELS[i]}`).onclick=()=>printSingleVideo(i);$(`reset${LABELS[i]}`).onclick=()=>resetVideo(i)});
+$('addVideoBtn').onclick=()=>{if(activeCount>=6)return;activeCount++;$(`slot${activeCount}`).classList.remove('hidden');$('addVideoBtn').disabled=activeCount===6;$('addVideoBtn').textContent=activeCount===6?'動画C～Fを追加済み':`動画${LABELS[activeCount]}を追加`;updateAnalyzeState()};
+function analyzeSingleVideo(i){const label=`動画${LABELS[i]}`;if(!sourceReady(i)){setStatus(`先に${label}のコメントを取得してください。`,'error');return}setStatus(`${label}を解析しています…`);try{const result=analyze(fetched[i],fetched[i].videoTitle||label,i);currentSingleIndex=i;renderSingle(result,label);$('results').classList.add('hidden');setStatus(`${label}の単独評価が完了しました。`,'success')}catch(e){$('singleResults').classList.add('hidden');currentSingleIndex=null;setStatus(e.message||`${label}の解析に失敗しました。`,'error')}}
+function printSingleVideo(i){const label=`動画${LABELS[i]}`;if(!sourceReady(i)){setStatus(`先に${label}のコメントを取得してください。`,'error');return}try{const result=analyze(fetched[i],fetched[i].videoTitle||label,i);currentSingleIndex=i;renderSingle(result,label);$('results').classList.add('hidden');setStatus(`${label}の印刷・PDF保存画面を開きます。`,'success');const originalTitle=document.title;document.title=`${label}_単独評価_${result.name}`;void document.body.offsetHeight;window.print();document.title=originalTitle}catch(e){$('singleResults').classList.add('hidden');currentSingleIndex=null;setStatus(e.message||`${label}のPDF出力に失敗しました。`,'error')}}
+$('analyzeBtn').onclick=()=>{const active=activeIndices();if(!active.every(sourceReady)){setStatus(`表示中の${activeCount}動画すべてのコメントを取得してください。`,'error');return}setStatus(`${activeCount}つの動画を解析しています…`);try{const loaded=active.map(i=>({name:fetched[i].videoTitle||`動画${LABELS[i]}`,rows:fetched[i],index:i}));render(loaded.map(x=>analyze(x.rows,x.name,x.index)));$('singleResults').classList.add('hidden');$('comparisonTitle').textContent=`📋 ${activeCount}動画比較`;$('commonTitle').textContent=`🔍 ${activeCount}動画の共通キーワード TOP30`;setStatus('比較分析が完了しました。','success')}catch(e){$('results').classList.add('hidden');setStatus(e.message||'解析に失敗しました。','error')}};
+$('resetBtn').onclick=reset;$('printBtn').onclick=()=>window.print();
+function clearVideo(i){fetched[i]=null;urlInputs[i].value='';$(`fetchStatus${i+1}`).textContent='YouTube URLを入力してください。';$(`fetchStatus${i+1}`).className='fetch-status';$(`preview${i+1}`).innerHTML='';$(`preview${i+1}`).classList.add('hidden');$(`copy${i+1}`).disabled=true;$(`save${i+1}`).disabled=true;$(`analyze${LABELS[i]}`).disabled=true;$(`pdf${LABELS[i]}`).disabled=true}
+function resetVideo(i){clearVideo(i);$('results').classList.add('hidden');if(currentSingleIndex===i){$('singleResults').classList.add('hidden');currentSingleIndex=null}$('printBtn').disabled=$('results').classList.contains('hidden')&&$('singleResults').classList.contains('hidden');updateAnalyzeState();setStatus(`動画${LABELS[i]}をリセットしました。`,'success')}
+function reset(){Array.from({length:6},(_,i)=>i).forEach(clearVideo);activeCount=2;currentSingleIndex=null;[3,4,5,6].forEach(i=>$(`slot${i}`).classList.add('hidden'));$('addVideoBtn').disabled=false;$('addVideoBtn').textContent='動画Cを追加';$('results').classList.add('hidden');$('singleResults').classList.add('hidden');$('printBtn').disabled=true;$('analyzeBtn').disabled=true;$('analyzeBtn').textContent='2動画を比較分析';setStatus('全体をリセットしました。動画A・動画BのURLを入力してください。','success')}
+function setStatus(s,type=''){const x=$('status');x.textContent=s;x.className=type}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function getVideoId(value){try{const u=new URL(value);if(u.hostname==='youtu.be')return u.pathname.split('/').filter(Boolean)[0]||null;if(u.hostname.endsWith('youtube.com')){if(u.pathname==='/watch')return u.searchParams.get('v');const m=u.pathname.match(/^\/(?:shorts|embed|live)\/([^/?#]+)/);if(m)return m[1]}}catch(_){if(/^[A-Za-z0-9_-]{11}$/.test(value))return value}return null}
+let jsonpSequence=0;
+function requestByJsonp(url){return new Promise((resolve,reject)=>{const callback=`youtubeInsightCallback${Date.now()}_${jsonpSequence++}`,script=document.createElement('script'),timer=setTimeout(()=>finish(new Error('YouTube APIへの接続がタイムアウトしました。')),15000);function finish(error,data){clearTimeout(timer);delete window[callback];script.remove();error?reject(error):resolve(data)}window[callback]=data=>finish(null,data);script.onerror=()=>finish(new Error('YouTube APIへ接続できません。ネットワークまたはAPIキーの制限を確認してください。'));script.src=url+(`${url.includes('?')?'&':'?'}callback=${encodeURIComponent(callback)}`);document.head.appendChild(script)})}
+async function requestYouTube(url){try{const response=await fetch(url);const data=await response.json();if(!response.ok||data.error)throw new Error(data.error?.message||`HTTP ${response.status}`);return data}catch(error){if(error instanceof TypeError){const data=await requestByJsonp(url);if(data?.error)throw new Error(data.error.message||'YouTube APIでエラーが発生しました。');return data}throw error}}
+async function getComments(i){const apiKey=$('apiKey').value.trim(),videoId=getVideoId(urlInputs[i].value.trim()),status=$(`fetchStatus${i+1}`),btn=$(`fetch${i+1}`);if(!apiKey){status.textContent='APIキーを入力してください。';status.className='fetch-status error';return}if(!videoId){status.textContent='正しいYouTube URLまたは動画IDを入力してください。';status.className='fetch-status error';return}btn.disabled=true;status.textContent='コメント取得中…';status.className='fetch-status';try{const videoData=await requestYouTube(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${encodeURIComponent(videoId)}&key=${encodeURIComponent(apiKey)}`);if(!videoData.items?.length)throw new Error('動画が見つかりません。URLとAPIキーの制限を確認してください。');const videoTitle=videoData.items[0].snippet?.title||`動画${LABELS[i]}`;const rows=[];let token='';do{let request=`https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${encodeURIComponent(videoId)}&maxResults=100&textFormat=plainText&order=relevance&key=${encodeURIComponent(apiKey)}`;if(token)request+=`&pageToken=${encodeURIComponent(token)}`;const data=await requestYouTube(request);for(const item of data.items||[]){const c=item.snippet.topLevelComment.snippet;rows.push({'投稿者':c.authorDisplayName||'','コメント':c.textDisplay||'','いいね数':c.likeCount??0,'投稿日':c.publishedAt||''})}token=data.nextPageToken||''}while(token&&rows.length<500);fetched[i]=rows.slice(0,500);fetched[i].videoTitle=videoTitle;status.textContent=`「${videoTitle}」から${fetched[i].length.toLocaleString()}件取得しました。`;status.className='fetch-status ready';$(`copy${i+1}`).disabled=!fetched[i].length;$(`save${i+1}`).disabled=!fetched[i].length;displayPreview(i);updateAnalyzeState()}catch(e){fetched[i]=null;status.textContent='エラー: '+(e.message||'コメントを取得できませんでした。');status.className='fetch-status error';updateAnalyzeState()}finally{btn.disabled=false}}
+function displayPreview(i){const box=$(`preview${i+1}`),rows=fetched[i]||[];box.innerHTML=rows.slice(0,10).map(r=>`<div class="comment" style="--c:${COLORS[i]}"><div class="comment-head"><span>${esc(r['投稿者'])}</span><span>👍 ${num(r['いいね数']).toLocaleString()}</span></div>${esc(r['コメント'])}</div>`).join('')+(rows.length>10?`<div class="muted">ほか ${(rows.length-10).toLocaleString()}件</div>`:'');box.classList.toggle('hidden',!rows.length)}
+async function copyComments(i){const rows=fetched[i]||[];if(!rows.length)return;const text=rows.map(r=>`${r['投稿者']}\n${r['コメント']}\n👍 ${r['いいね数']} / ${r['投稿日']}\n--------------------------`).join('\n');try{await navigator.clipboard.writeText(text);$(`fetchStatus${i+1}`).textContent='コメントをクリップボードへコピーしました。'}catch(_){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();$(`fetchStatus${i+1}`).textContent='コメントをコピーしました。'}}
+function downloadCSV(i){const rows=fetched[i]||[];if(!rows.length)return;const q=v=>`"${String(v??'').replace(/"/g,'""')}"`,csv='投稿者,コメント,いいね数,投稿日\r\n'+rows.map(r=>[r['投稿者'],r['コメント'],r['いいね数'],r['投稿日']].map(q).join(',')).join('\r\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`youtube_comments_${LABELS[i]}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function includesAny(t,arr){return arr.some(w=>t.includes(w))}function rate(n,d){return d?n/d*100:0}function pct(n){return `${n.toFixed(1)}%`}
+function tokenize(text){return text.toLowerCase().replace(/https?:\/\/\S+/g,' ').replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff'-]+/g,' ').split(/\s+/).map(w=>w.replace(/^['-]+|['-]+$/g,'')).filter(w=>w.length>=3&&!STOP.has(w)&&!/^\d+$/.test(w))}
+function analyze(data,name,index){let positive=0,negative=0,purchase=0,request=0,expectation=0,complaint=0;const keywords={};data.forEach(r=>{const t=String(r['コメント']||'').toLowerCase();if(includesAny(t,WORDS.positive))positive++;if(includesAny(t,WORDS.negative))negative++;if(includesAny(t,WORDS.purchase))purchase++;if(includesAny(t,WORDS.request))request++;if(includesAny(t,WORDS.expectation))expectation++;if(includesAny(t,WORDS.complaint))complaint++;tokenize(t).forEach(w=>keywords[w]=(keywords[w]||0)+1)});const total=data.length,rates={positive:rate(positive,total),negative:rate(negative,total),purchase:rate(purchase,total),request:rate(request,total),expectation:rate(expectation,total),complaint:rate(complaint,total)},score=rates.positive*.25+rates.purchase*.35+rates.expectation*.20+rates.request*.05-rates.negative*.25-rates.complaint*.30,top=[...data].sort((a,b)=>num(b['いいね数'])-num(a['いいね数'])).slice(0,10).map(r=>({text:r['コメント']||'',likes:num(r['いいね数'])}));return{name,total,positive,negative,purchase,request,expectation,complaint,rates,score,keywords,top,color:COLORS[index]}}
+function num(v){const n=Number(String(v??0).replace(/[, ]/g,''));return Number.isFinite(n)?n:0}function topEntries(m,n=20){return Object.entries(m).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,n)}
+function render(rs){$('results').classList.remove('hidden');$('printBtn').disabled=false;renderCards(rs);renderDetails(rs);renderTable(rs);renderCharts(rs);renderRanking(rs);renderCommon(rs);renderUnique(rs);renderKeywords(rs);renderComments(rs);renderSummary(rs)}
+function renderCards(rs){$('fileCards').innerHTML=rs.map(r=>`<div class="file-card" style="--c:${r.color}"><div class="file-name" title="${esc(r.name)}">${esc(r.name)}</div><div class="metric">${r.total.toLocaleString()}</div><div class="muted">コメント / ポジティブ ${pct(r.rates.positive)} / 購入意向 ${pct(r.rates.purchase)}</div></div>`).join('')}
+function detailCardHtml(r){const categoryColors=['#29b6f6','#ff4d67','#ffca28','#00e58b'],sentimentTotal=r.positive+r.negative,positiveWidth=sentimentTotal?r.positive/sentimentTotal*100:50,negativeWidth=sentimentTotal?r.negative/sentimentTotal*100:50,categories=[['期待',r.expectation],['不満',r.complaint],['要望',r.request],['購入意向',r.purchase]],max=Math.max(1,...categories.map(x=>x[1]));return `<article class="detail-card" style="--c:${r.color}"><div class="file-name" title="${esc(r.name)}">${esc(r.name)}</div><div class="count-grid"><div class="count-box"><span class="count-value">${r.total.toLocaleString()}</span><span class="count-label">総コメント数</span></div><div class="count-box"><span class="count-value">${r.positive.toLocaleString()}</span><span class="count-label">ポジティブ</span></div><div class="count-box"><span class="count-value">${r.negative.toLocaleString()}</span><span class="count-label">ネガティブ</span></div><div class="count-box"><span class="count-value">${r.purchase.toLocaleString()}</span><span class="count-label">購入意向</span></div></div><div class="sentiment-counts"><div class="sentiment-count positive" style="width:${positiveWidth}%">ポジティブ ${r.positive.toLocaleString()}件</div><div class="sentiment-count negative" style="width:${negativeWidth}%">ネガティブ ${r.negative.toLocaleString()}件</div></div><div class="category-counts">${categories.map(([label,value],i)=>`<div class="category-item"><div class="category-bar" style="height:${Math.max(8,value/max*100)}%;background:${categoryColors[i]}">${value.toLocaleString()}件</div><div class="category-label">${label}</div></div>`).join('')}</div></article>`}
+function renderDetails(rs){$('detailAnalysis').innerHTML=rs.map(detailCardHtml).join('')}
+function renderSingle(r,label){$('singleResults').classList.remove('hidden');$('printBtn').disabled=false;$('singleTitle').textContent=`🎯 ${label} 単独評価`;$('singleSummaryTitle').textContent=`📝 ${label} 総評`;$('singleOverview').innerHTML=`<div class="file-card" style="--c:${r.color}"><div class="file-name" title="${esc(r.name)}">${esc(r.name)}</div><div class="metric">${r.score.toFixed(1)}</div><div class="muted">総合参考スコア / コメント ${r.total.toLocaleString()}件</div></div><div class="file-card" style="--c:${r.color}"><div class="file-name">感情評価</div><div class="metric">${r.positive.toLocaleString()}件</div><div class="muted">ポジティブ ${pct(r.rates.positive)} / ネガティブ ${r.negative.toLocaleString()}件（${pct(r.rates.negative)}）</div></div><div class="file-card" style="--c:${r.color}"><div class="file-name">行動・関心評価</div><div class="metric">${r.purchase.toLocaleString()}件</div><div class="muted">購入意向 ${pct(r.rates.purchase)} / 期待 ${r.expectation.toLocaleString()}件 / 要望 ${r.request.toLocaleString()}件</div></div>`;$('singleDetail').innerHTML=detailCardHtml(r);const metrics=[['ポジティブ',r.positive,r.rates.positive],['ネガティブ',r.negative,r.rates.negative],['購入意向',r.purchase,r.rates.purchase],['期待',r.expectation,r.rates.expectation],['不満',r.complaint,r.rates.complaint],['要望',r.request,r.rates.request]];$('singleMetrics').innerHTML=metrics.map(([metricLabel,count,value])=>`<div class="bar-row"><span>${metricLabel}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,value)}%;background:${r.color}"></div></div><b>${count.toLocaleString()}件</b></div>`).join('');$('singleKeywords').innerHTML=topEntries(r.keywords,20).map(([word,count])=>`<span class="chip">${esc(word)} <b>${count.toLocaleString()}件</b></span>`).join('')||'<span class="muted">対象となるキーワードはありません。</span>';$('singleComments').innerHTML=`<div class="file-card" style="--c:${r.color}"><div class="file-name">${esc(r.name)}</div>${r.top.map(x=>`<div class="comment" style="--c:${r.color}"><div class="comment-head">👍 ${x.likes.toLocaleString()}</div>${esc(x.text)}</div>`).join('')}</div>`;const tendency=r.rates.positive>r.rates.negative?'ポジティブな反応が優勢です。':r.rates.negative>r.rates.positive?'ネガティブな反応が優勢です。':'ポジティブとネガティブが同程度です。';$('singleSummary').textContent=`${r.name}\n\n${tendency}\nポジティブ：${r.positive.toLocaleString()}件（${pct(r.rates.positive)}）\nネガティブ：${r.negative.toLocaleString()}件（${pct(r.rates.negative)}）\n購入意向：${r.purchase.toLocaleString()}件（${pct(r.rates.purchase)}）\n期待：${r.expectation.toLocaleString()}件（${pct(r.rates.expectation)}）\n不満：${r.complaint.toLocaleString()}件（${pct(r.rates.complaint)}）\n要望：${r.request.toLocaleString()}件（${pct(r.rates.request)}）\n総合参考スコア：${r.score.toFixed(1)}\n\n※登録済みの日英キーワードへの単純一致による参考評価です。文脈、皮肉、否定表現を完全には判別しません。`;window.scrollTo({top:$('singleResults').offsetTop-16,behavior:'smooth'})}
+function renderTable(rs){const metrics=[['総コメント数','total',false,true],['ポジティブ率','positive',true,true],['ネガティブ率','negative',true,false],['購入意向率','purchase',true,true],['期待率','expectation',true,true],['不満率','complaint',true,false],['要望率','request',true,true],['総合スコア','score',false,true]];let h=`<table><thead><tr><th>指標</th>${rs.map(r=>`<th style="color:${r.color}">${esc(r.name)}</th>`).join('')}</tr></thead><tbody>`;for(const[label,key,isRate,higher]of metrics){const vals=rs.map(r=>key==='score'?r.score:(isRate?r.rates[key]:r[key])),best=higher?Math.max(...vals):Math.min(...vals);h+=`<tr><td>${label}</td>${vals.map(v=>`<td class="${v===best?'best':''}">${key==='score'?v.toFixed(1):isRate?pct(v):v.toLocaleString()}</td>`).join('')}</tr>`}h+='</tbody></table>';$('comparison').innerHTML=h}
+function renderCharts(rs){const metrics=[['ポジティブ率','positive'],['ネガティブ率','negative'],['購入意向率','purchase'],['期待率','expectation'],['不満率','complaint'],['要望率','request']];$('metricCharts').innerHTML=`<div class="legend">${rs.map(r=>`<span><i class="dot" style="background:${r.color}"></i>${esc(r.name)}</span>`).join('')}</div>`+metrics.map(([label,key])=>`<h3>${label}</h3>${rs.map(r=>`<div class="bar-row"><span title="${esc(r.name)}">${esc(shortName(r.name))}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,r.rates[key])}%;background:${r.color}"></div></div><b>${pct(r.rates[key])}</b></div>`).join('')}`).join('')}
+function shortName(n){return n.length>14?n.slice(0,12)+'…':n}function renderRanking(rs){const s=[...rs].sort((a,b)=>b.score-a.score);$('ranking').innerHTML=s.map((r,i)=>`<div class="rank-card"><div class="medal">${['🥇','🥈','🥉'][i]||`${i+1}位`}</div><div class="file-name" title="${esc(r.name)}">${esc(r.name)}</div><div class="score">${r.score.toFixed(1)}</div><div class="muted">参考スコア</div></div>`).join('')}
+function renderCommon(rs){const common=Object.keys(rs[0].keywords).filter(k=>rs.slice(1).every(r=>r.keywords[k])).map(k=>[k,rs.reduce((sum,r)=>sum+r.keywords[k],0)]).sort((a,b)=>b[1]-a[1]).slice(0,30);$('commonKeywords').innerHTML=common.length?common.map(([k,v])=>`<span class="chip">${esc(k)} <b>${v}</b></span>`).join(''):`<span class="muted">${rs.length}データすべてに共通するキーワードはありません。</span>`}
+function uniqueList(r,rs){const totalR=Object.values(r.keywords).reduce((a,b)=>a+b,0)||1;return Object.entries(r.keywords).map(([k,c])=>{const own=c/totalR,other=Math.max(...rs.filter(x=>x!==r).map(x=>(x.keywords[k]||0)/(Object.values(x.keywords).reduce((a,b)=>a+b,0)||1)));return[k,c,own-other]}).filter(x=>x[2]>0).sort((a,b)=>b[2]-a[2]||b[1]-a[1]).slice(0,15)}
+function renderUnique(rs){$('uniqueKeywords').innerHTML=rs.map(r=>`<div class="file-card" style="--c:${r.color}"><div class="file-name">${esc(r.name)}</div><div class="chips" style="margin-top:12px">${uniqueList(r,rs).map(([k,c])=>`<span class="chip">${esc(k)} <b>${c}</b></span>`).join('')||'<span class="muted">特徴語なし</span>'}</div></div>`).join('')}function renderKeywords(rs){$('fileKeywords').innerHTML=rs.map(r=>`<div class="file-card" style="--c:${r.color}"><div class="file-name">${esc(r.name)}</div><div class="chips" style="margin-top:12px">${topEntries(r.keywords).map(([k,c])=>`<span class="chip">${esc(k)} <b>${c}</b></span>`).join('')}</div></div>`).join('')}
+function renderComments(rs){$('topComments').innerHTML=rs.map(r=>`<div class="file-card" style="--c:${r.color}"><div class="file-name">${esc(r.name)}</div>${r.top.map(x=>`<div class="comment" style="--c:${r.color}"><div class="comment-head">${x.likes===null?'いいね数列なし':`👍 ${x.likes.toLocaleString()}`}</div>${esc(x.text)}</div>`).join('')}</div>`).join('')}
+function renderSummary(rs){const rank=[...rs].sort((a,b)=>b.score-a.score),pos=[...rs].sort((a,b)=>b.rates.positive-a.rates.positive),buy=[...rs].sort((a,b)=>b.rates.purchase-a.rates.purchase),neg=[...rs].sort((a,b)=>a.rates.negative-b.rates.negative);$('summary').textContent=`総合参考スコア首位：${rank[0].name}（${rank[0].score.toFixed(1)}）\nポジティブ率首位：${pos[0].name}（${pct(pos[0].rates.positive)}）\n購入意向率首位：${buy[0].name}（${pct(buy[0].rates.purchase)}）\nネガティブ率が最も低い：${neg[0].name}（${pct(neg[0].rates.negative)}）\n\n※判定は登録済みの日英キーワードへの単純一致です。文脈、皮肉、否定表現を完全には判別しません。コメント数が異なるため、件数だけでなく率も併せて比較してください。`}
+</script></body></html>
